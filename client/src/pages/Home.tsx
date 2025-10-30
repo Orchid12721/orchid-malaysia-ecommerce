@@ -1,13 +1,21 @@
 import { Link } from "wouter";
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShoppingBag, Search, User, Heart, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { ShoppingBag, Search, User, Heart, Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { categoryStore, productStore, Category, Product } from "@/lib/store";
 
 export default function Home() {
-  const { data: categories, isLoading: categoriesLoading } = trpc.categories.list.useQuery();
-  const { data: featuredProducts, isLoading: productsLoading } = trpc.products.getFeatured.useQuery();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load data from localStorage
+    setCategories(categoryStore.getAll());
+    setFeaturedProducts(productStore.getFeatured());
+    setLoading(false);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -48,9 +56,9 @@ export default function Home() {
                   CATEGORIES
                 </a>
               </Link>
-              <Link href="/about">
+              <Link href="/admin">
                 <a className="text-sm font-medium tracking-wide hover:opacity-60 transition-opacity">
-                  ABOUT
+                  ADMIN
                 </a>
               </Link>
             </nav>
@@ -88,11 +96,6 @@ export default function Home() {
               <Link href="/categories">
                 <a className="block text-base font-medium tracking-wide hover:opacity-60 transition">
                   CATEGORIES
-                </a>
-              </Link>
-              <Link href="/about">
-                <a className="block text-base font-medium tracking-wide hover:opacity-60 transition">
-                  ABOUT
                 </a>
               </Link>
               <div className="pt-4 border-t">
@@ -135,13 +138,13 @@ export default function Home() {
             <p className="text-gray-600 text-lg">Explore our curated collections</p>
           </div>
           
-          {categoriesLoading ? (
+          {loading ? (
             <div className="flex justify-center py-20">
-              <Loader2 className="w-10 h-10 animate-spin" />
+              <div className="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-              {categories?.map((category, index) => (
+              {categories.filter(c => c.isActive).map((category, index) => (
                 <Link key={category.id} href={`/category/${category.slug}`}>
                   <div 
                     className="group cursor-pointer animate-fade-in-up"
@@ -187,14 +190,24 @@ export default function Home() {
             </Link>
           </div>
 
-          {productsLoading ? (
+          {loading ? (
             <div className="flex justify-center py-20">
-              <Loader2 className="w-10 h-10 animate-spin" />
+              <div className="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
+            </div>
+          ) : featuredProducts.length === 0 ? (
+            <div className="text-center py-20">
+              <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No featured products yet</p>
+              <Link href="/admin">
+                <Button variant="outline" className="mt-6 rounded-none px-8">
+                  ADD PRODUCTS IN ADMIN
+                </Button>
+              </Link>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-                {featuredProducts?.map((product, index) => (
+                {featuredProducts.map((product, index) => (
                   <Link key={product.id} href={`/product/${product.slug}`}>
                     <div 
                       className="group cursor-pointer animate-fade-in-up"
@@ -261,52 +274,46 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer - Clean & Professional */}
-      <footer className="border-t py-16 md:py-20">
+      {/* Footer */}
+      <footer className="bg-gray-50 border-t py-16">
         <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
-              <h3 className="font-bold text-xl mb-5 tracking-tight">ORCHID MALAYSIA</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Your destination for beautiful traditional and modern fashion from around the world.
+              <h3 className="font-bold text-xl mb-4 tracking-tight">ORCHID MALAYSIA</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Your destination for beautiful traditional and modern fashion.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-5 tracking-wide">SHOP</h4>
+              <h4 className="font-semibold mb-4 tracking-wide">SHOP</h4>
               <ul className="space-y-3 text-sm text-gray-600">
                 <li><Link href="/products"><a className="hover:text-black transition">All Products</a></Link></li>
                 <li><Link href="/categories"><a className="hover:text-black transition">Categories</a></Link></li>
-                <li><Link href="/new"><a className="hover:text-black transition">New Arrivals</a></Link></li>
-                <li><Link href="/sale"><a className="hover:text-black transition">Sale</a></Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-5 tracking-wide">HELP</h4>
-              <ul className="space-y-3 text-sm text-gray-600">
-                <li><Link href="/contact"><a className="hover:text-black transition">Contact Us</a></Link></li>
-                <li><Link href="/shipping"><a className="hover:text-black transition">Shipping Info</a></Link></li>
-                <li><Link href="/returns"><a className="hover:text-black transition">Returns</a></Link></li>
-                <li><Link href="/faq"><a className="hover:text-black transition">FAQ</a></Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-5 tracking-wide">ABOUT</h4>
-              <ul className="space-y-3 text-sm text-gray-600">
-                <li><Link href="/about"><a className="hover:text-black transition">Our Story</a></Link></li>
                 <li><Link href="/admin"><a className="hover:text-black transition">Admin Panel</a></Link></li>
               </ul>
             </div>
-          </div>
-          <div className="border-t pt-10 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-gray-600">
-            <p>&copy; 2024 Orchid Malaysia. All rights reserved.</p>
-            <div className="flex gap-8">
-              <a href="#" className="hover:text-black transition">Privacy Policy</a>
-              <a href="#" className="hover:text-black transition">Terms of Service</a>
+            <div>
+              <h4 className="font-semibold mb-4 tracking-wide">SUPPORT</h4>
+              <ul className="space-y-3 text-sm text-gray-600">
+                <li><a href="#" className="hover:text-black transition">Contact Us</a></li>
+                <li><a href="#" className="hover:text-black transition">FAQs</a></li>
+                <li><a href="#" className="hover:text-black transition">Shipping</a></li>
+              </ul>
             </div>
+            <div>
+              <h4 className="font-semibold mb-4 tracking-wide">FOLLOW US</h4>
+              <ul className="space-y-3 text-sm text-gray-600">
+                <li><a href="#" className="hover:text-black transition">Facebook</a></li>
+                <li><a href="#" className="hover:text-black transition">Instagram</a></li>
+                <li><a href="#" className="hover:text-black transition">Twitter</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t mt-12 pt-8 text-center text-sm text-gray-500">
+            <p>&copy; 2024 Orchid Malaysia. All rights reserved.</p>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
